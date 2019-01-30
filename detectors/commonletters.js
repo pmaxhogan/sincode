@@ -1,3 +1,4 @@
+const lev = require("fast-levenshtein");
 // most common letters
 const commonletters = "etaoinsrhldcumfpgwybvkxjqz";
 
@@ -17,10 +18,13 @@ module.exports = (text) => {
 		}
 	});
 
-	return Object.entries(histogram).sort((a, b) => {
+	const letterFreq = Object.entries(histogram).sort((a, b) => {
 		// eg. a is ["e", 5] and b is ["t", 3]
 		const firstSort = b[1] - a[1];
 		if(firstSort !== 0) return firstSort;
 		return a[0].charCodeAt(0) - b[0].charCodeAt(0);
 	}).reduce((acc, [letter]) => acc + letter, "");
+
+  // 1 - (the difference from the freq and common letters out of 25)
+  return parseFloat((1 - (lev.get(commonletters, letterFreq) / 25)).toFixed(8));
 };

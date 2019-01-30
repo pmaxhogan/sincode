@@ -5,7 +5,8 @@
   "main": "index.js",
   "dependencies": {
     "eslint": "^5.12.1",
-    "esrever": "^0.2.0"
+    "esrever": "^0.2.0",
+    "fast-levenshtein": "^2.0.6"
   },
   "devDependencies": {},
   "scripts": {
