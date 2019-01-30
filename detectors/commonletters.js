@@ -9,13 +9,10 @@ module.exports = (text) => {
 
 	// eg. {"e": 5, "t": 3, "l": 1}
 	const histogram = {};
+  commonletters.split("").forEach(letter => histogram[letter] = 0);
 	letters.forEach(letter => {
-		// increment / create the count of this letter
-		if(histogram[letter]){
-			histogram[letter] ++;
-		}else{
-			histogram[letter] = 1;
-		}
+		// increment the count of this letter
+		histogram[letter] ++;
 	});
 
 	const letterFreq = Object.entries(histogram).sort((a, b) => {
