@@ -4,7 +4,7 @@ const commonletters = "etaoinsrhldcumfpgwybvkxjqz";
 module.exports = (text) => {
 	// get the letters from text
 	const letters = text.toLowerCase().replace(/[^a-z]/g, "").split("");
-	console.log(letters);
+	// console.log(letters);
 
 	// eg. {"e": 5, "t": 3, "l": 1}
 	const histogram = {};
@@ -17,10 +17,10 @@ module.exports = (text) => {
 		}
 	});
 
-	console.log(Object.entries(histogram).sort((a, b) => {
+	return Object.entries(histogram).sort((a, b) => {
 		// eg. a is ["e", 5] and b is ["t", 3]
 		const firstSort = b[1] - a[1];
 		if(firstSort !== 0) return firstSort;
 		return a[0].charCodeAt(0) - b[0].charCodeAt(0);
-	}).reduce((acc, [letter]) => acc + letter, ""));
+	}).reduce((acc, [letter]) => acc + letter, "");
 };

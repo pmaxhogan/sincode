@@ -7,7 +7,10 @@ module.exports = text => {
 
 	for(let i = 1; i < letters.length; i ++){
 		// try each shift
-		ret.push(rot(text, i));
+		ret.push({
+			text: rot(text, i),
+			desc: "rotated by " + i
+		});
 	}
 	// return it
 	return ret;
