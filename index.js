@@ -18,7 +18,6 @@ fs.readdirSync(path.join(__dirname, "mutations")).forEach(newMutation => {
       path.join(__dirname, "mutations/" + newMutation)
     )(mutation.text);
     results.forEach(result => {
-      console.log("got result", result);
       newBatch.push({
         text: result.text,
         desc: mutation.desc + " + " + result.desc
@@ -30,6 +29,7 @@ fs.readdirSync(path.join(__dirname, "mutations")).forEach(newMutation => {
 
 
 mutations.forEach(mutation => {
+  mutation.text = mutation.text.trim();
   let scores = [];
   mutation.detectors = [];
   fs.readdirSync(path.join(__dirname, "detectors")).forEach(detectorName => {
@@ -52,6 +52,12 @@ const mostLikely5 = mutations.sort((a, b) => b.avg - a.avg).slice(0, 5);
 // console.log("\n=== Complteted ===\n", mostLikely5);
 
 // most chars to display
-const maxChars = 50;
+const maxChars = 150;
 mostLikely5.forEach(mutation => {
-hello});
+  // display the 5 mostly likely mutations
+  console.log(`score: ${mutation.avg} \
+(${mutation.detectors.reduce((str, detector) => str + ", " + detector[0] + ": " + detector[1], ", ").slice(4)})\
+\n${mutation.desc}\n      \
+${mutation.text.slice(0, maxChars)}\
+${mutation.text.length > maxChars ? "..." : ""}\n`);
+});
