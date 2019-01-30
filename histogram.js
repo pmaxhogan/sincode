@@ -42,7 +42,7 @@ stream.on("data", data => {
 	leftOver = split[split.length - 1];
 });
 stream.on("end", () => {
-	console.log("could not find", remainingWords);
+	// console.log("could not find", remainingWords);
 	Object.entries(histogram).forEach(([word, freq]) => {
 		// pad to 25 chars
 		word = (word + " ".repeat(25)).slice(0, 25);
