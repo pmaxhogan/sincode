@@ -3,12 +3,19 @@ const path = require("path");
 const readline = require("readline");
 const cluster = require("cluster");
 const chalk = require("chalk");
+const program = require("commander");
+const package = require("./package.json");
+program.
+  version(package.version).
+  option("-b, --big", "Use a bigger wordlist").
+  option("-d, --delete-every-max <n>", "Delete every <n> characters.", parseInt).
+  option("-k, --keep-every-max <n>", "Keep every <n> characters.", parseInt).
+  parse(process.argv);
 
 const maxChars = 150;
 const numChildren = parseInt(process.argv[2]) || require("os").cpus().length;
 
 if(cluster.isMaster){
-	const package = require("./package.json");
 	console.log(chalk`{bgRedBright \n{black \n${package.name} v${package.version}\n}}`);
 
 	// read text
@@ -32,7 +39,7 @@ if(cluster.isMaster){
 		mutations.forEach(mutation => {
 			const results = require(
 				path.join(__dirname, "mutations/" + newMutation)
-			)(mutation.text);
+			)(mutation.text, program);
 			results.forEach(result => {
 				newBatch.push({
 					text: result.text,
@@ -111,7 +118,7 @@ if(cluster.isMaster){
 					// load a module from the mutations folder and add its score
 					const score = parseFloat(require(
 						path.join(__dirname, "detectors/" + detectorName)
-					)(mutation.text).toFixed(5));
+					)(mutation.text, program).toFixed(5));
 					mutation.detectors.push([detectorName, score]);
 					scores.push(score);
 				});

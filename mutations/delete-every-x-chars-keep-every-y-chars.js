@@ -1,17 +1,18 @@
-
+const chalk = require("chalk");
 // the most to try as the keepEvery var (see below)
 const keepEveryMax = 6;
 // the most to try as the delEvery var (see below)
 const delEveryMax = 6;
 
-module.exports = text => {
+module.exports = (text, program) => {
   // val to return
   const ret = [];
 
   // enumerate through possible delete / keep combinations
   // etc. if keepEvery is 2 and delEvery is 3, keep 2, discard 3, etc
-  for(let keepEvery = 1; keepEvery <= keepEveryMax; keepEvery++){
-    for(let delEvery = 1; delEvery <= delEveryMax; delEvery++){
+  console.log(`\t\t\tdelete every ${program.deleteEveryMax || delEveryMax} and keep every ${program.keepEveryMax || keepEveryMax}`);
+  for(let keepEvery = 1; keepEvery <= (program.deleteEveryMax || delEveryMax); keepEvery++){
+    for(let delEvery = 1; delEvery <= (program.keepEveryMax || keepEveryMax); delEvery++){
       // the processed string
       let str = "";
 

@@ -2,10 +2,10 @@ const fs = require("fs");
 const path = require("path");
 const chalk = require("chalk");
 // console.log(chalk.bold("\treading wordlist file into memory..."));
-const bigWordList = fs.readFileSync(path.join(__dirname, "../small.txt")).toString().split("\n");
 // console.log(chalk.bold("\tdone reading wordlist"));
 
-module.exports = text => {
+module.exports = (text, program) => {
+  const bigWordList = fs.readFileSync(path.join(__dirname, `../${program.big ? "big" : "small"}.txt`)).toString().split("\n");
   const words = text.toLowerCase().replace(/[^a-z]/g, " ").replace(/ {2,}/g, " ").split(" ").filter(Boolean);
   let remainingWords = words.slice();
   let leftOver = "";
