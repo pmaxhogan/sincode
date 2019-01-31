@@ -2,7 +2,7 @@ const fs = require("fs");
 const path = require("path");
 const chalk = require("chalk");
 console.log(chalk.bold("\treading wordlist file into memory..."));
-const bigWordList = fs.readFileSync(path.join(__dirname, "../big.txt")).toString().split("\n");
+const bigWordList = fs.readFileSync(path.join(__dirname, "../small.txt")).toString().split("\n");
 console.log(chalk.bold("\tdone reading wordlist"));
 
 module.exports = text => {
@@ -37,15 +37,6 @@ module.exports = text => {
 			}
 		}
 	});
-
-	// console.log("could not find", remainingWords, "out of", words);
-
-  // Object.entries(histogram).forEach(([word, freq]) => {
-	// 	// pad to 25 chars
-	// 	word = (word + " ".repeat(25)).slice(0, 25);
-	// 	// graph it
-  //
-	// });
 
   // return 1 - the ratio of words not found to total words
   return 1 - (remainingWords.length / words.length);
