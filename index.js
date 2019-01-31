@@ -1,7 +1,11 @@
 const fs = require("fs");
 const path = require("path");
-
+const chalk = require("chalk");
+const maxChars = 150;
+console.log(chalk`{bgRedBright \n{black \nSherlock v${require("./package.json").version}\n}}`);
 const text = fs.readFileSync(path.join(__dirname, "text.txt")).toString();
+console.log(chalk`{greenBright Read text}\n\t{bold ${text.slice(0, 150)}}\n`);
+
 
 // mutations contain info about themselves
 let mutations = [
@@ -10,7 +14,12 @@ let mutations = [
     desc: "normal text"
   }
 ];
+
+console.log(chalk`\n{greenBright {bold Running mutations}}\n`);
+
 fs.readdirSync(path.join(__dirname, "mutations")).forEach(newMutation => {
+  let oldMutationsCount = mutations.length;
+  console.log(chalk`{bold \tRunning mutation} {yellowBright ${newMutation}}`);
   // load a module from the mutations folder and add its output
   const newBatch = [];
   mutations.forEach(mutation => {
@@ -25,7 +34,10 @@ fs.readdirSync(path.join(__dirname, "mutations")).forEach(newMutation => {
     });
   });
   mutations = mutations.concat(newBatch);
+  console.log(chalk`{bold \tRan mutation {yellowBright ${newMutation}} and added {greenBright ${(mutations.length - oldMutationsCount)} new mutations}}\n`);
 });
+
+console.log(chalk`\n{greenBright {bold Running detectors on {yellowBright ${mutations.length} mutations}}}\n`);
 
 
 mutations.forEach(mutation => {
@@ -35,9 +47,9 @@ mutations.forEach(mutation => {
   fs.readdirSync(path.join(__dirname, "detectors")).forEach(detectorName => {
     // console.log(detectorName);
     // load a module from the mutations folder and add its score
-    const score = require(
+    const score = parseFloat(require(
       path.join(__dirname, "detectors/" + detectorName)
-    )(mutation.text);
+    )(mutation.text).toFixed(5));
     mutation.detectors.push([detectorName, score]);
     scores.push(score);
   });
@@ -51,13 +63,12 @@ mutations.forEach(mutation => {
 const mostLikely5 = mutations.sort((a, b) => b.avg - a.avg).slice(0, 5);
 // console.log("\n=== Complteted ===\n", mostLikely5);
 
+console.log();
+console.log(chalk`\n{bold Analyzing reults...}\n`);
 // most chars to display
-const maxChars = 150;
 mostLikely5.forEach(mutation => {
+  const detectorString = mutation.detectors.reduce((str, detector) => str + ", " + detector[0] + ": " + detector[1], ", ").slice(4) +
+  (mutation.text.length > maxChars ? "..." : "");
   // display the 5 mostly likely mutations
-  console.log(`score: ${mutation.avg} \
-(${mutation.detectors.reduce((str, detector) => str + ", " + detector[0] + ": " + detector[1], ", ").slice(4)})\
-\n${mutation.desc}\n      \
-${mutation.text.slice(0, maxChars)}\
-${mutation.text.length > maxChars ? "..." : ""}\n`);
+  console.log(chalk`\t{yellowBright score: ${mutation.avg}} ({cyanBright ${detectorString}})\n{greenBright ${mutation.desc}}\n\t\tbold ${mutation.text.slice(0, maxChars)}}\n`);
 });
