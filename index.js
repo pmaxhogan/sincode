@@ -72,23 +72,14 @@ if(cluster.isMaster){
 		}
 	});
 
-	// cluster ids
-	let ids = [];
+
+	const jobsPerWorker = Math.ceil(mutations.length / numChildren);
+
+	let startIdx = 0;
 	for(const id in cluster.workers){
-		ids.push(id);
+		cluster.workers[id].send({type: "mutationtestjobs", data: mutations.slice(startIdx, startIdx + jobsPerWorker)});
+		startIdx += jobsPerWorker;
 	}
-
-
-	// index of worker in cluster ids to send the message to (round-robin)
-	let i = 0;
-
-	// assign mutation test jobs
-	mutations.forEach(mutation => {
-		// wrap it around
-		if(i === ids.length) i = 0;
-
-		cluster.workers[ids[i]].send({type: "mutationtestjob", data: mutation});
-	});
 
 	const onDone = () => {
 		mutations = newMutations;
@@ -109,25 +100,26 @@ if(cluster.isMaster){
 	};
 }else{
 	process.on("message", (msg) => {
-		if(msg.type === "mutationtestjob"){
-			mutation = msg.data;
-			mutation.text = mutation.text.trim();
-			let scores = [];
-			mutation.detectors = [];
-			fs.readdirSync(path.join(__dirname, "detectors")).forEach(detectorName => {
-				// console.log(detectorName);
-				// load a module from the mutations folder and add its score
-				const score = parseFloat(require(
-					path.join(__dirname, "detectors/" + detectorName)
-				)(mutation.text).toFixed(5));
-				mutation.detectors.push([detectorName, score]);
-				scores.push(score);
+		if(msg.type === "mutationtestjobs"){
+			msg.data.forEach(mutation => {
+				mutation.text = mutation.text.trim();
+				let scores = [];
+				mutation.detectors = [];
+				fs.readdirSync(path.join(__dirname, "detectors")).forEach(detectorName => {
+					// console.log(detectorName);
+					// load a module from the mutations folder and add its score
+					const score = parseFloat(require(
+						path.join(__dirname, "detectors/" + detectorName)
+					)(mutation.text).toFixed(5));
+					mutation.detectors.push([detectorName, score]);
+					scores.push(score);
+				});
+				// average the scores and get rid of stupid floating point crap
+				const avg = parseFloat((scores.reduce((a, b) => a + b, 0) / scores.length).toFixed(5));
+				// console.log(avg + "\n");
+				mutation.avg = avg;
+				process.send({type: "done", data: mutation});
 			});
-			// average the scores and get rid of stupid floating point crap
-			const avg = parseFloat((scores.reduce((a, b) => a + b, 0) / scores.length).toFixed(5));
-			// console.log(avg + "\n");
-			mutation.avg = avg;
-			process.send({type: "done", data: mutation});
 		}
 	});
 }

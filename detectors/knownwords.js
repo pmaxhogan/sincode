@@ -1,9 +1,9 @@
 const fs = require("fs");
 const path = require("path");
 const chalk = require("chalk");
-console.log(chalk.bold("\treading wordlist file into memory..."));
+// console.log(chalk.bold("\treading wordlist file into memory..."));
 const bigWordList = fs.readFileSync(path.join(__dirname, "../big.txt")).toString().split("\n");
-console.log(chalk.bold("\tdone reading wordlist"));
+// console.log(chalk.bold("\tdone reading wordlist"));
 
 module.exports = text => {
   const words = text.toLowerCase().replace(/[^a-z]/g, " ").replace(/ {2,}/g, " ").split(" ").filter(Boolean);
