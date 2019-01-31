@@ -82,6 +82,7 @@ if(cluster.isMaster){
 	}
 
 	const onDone = () => {
+		console.log();
 		mutations = newMutations;
 		for(const id in cluster.workers){
 			cluster.workers[id].kill();

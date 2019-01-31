@@ -1,8 +1,8 @@
 
 // the most to try as the keepEvery var (see below)
-const keepEveryMax = 3;
+const keepEveryMax = 6;
 // the most to try as the delEvery var (see below)
-const delEveryMax = 3;
+const delEveryMax = 6;
 
 module.exports = text => {
   // val to return
