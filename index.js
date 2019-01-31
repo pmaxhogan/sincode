@@ -64,11 +64,11 @@ const mostLikely5 = mutations.sort((a, b) => b.avg - a.avg).slice(0, 5);
 // console.log("\n=== Complteted ===\n", mostLikely5);
 
 console.log();
-console.log(chalk`\n{bold Analyzing reults...}\n`);
+console.log(chalk`\n{bold {greenBright Analyzing reults...}}\n`);
 // most chars to display
 mostLikely5.forEach(mutation => {
   const detectorString = mutation.detectors.reduce((str, detector) => str + ", " + detector[0] + ": " + detector[1], ", ").slice(4) +
   (mutation.text.length > maxChars ? "..." : "");
   // display the 5 mostly likely mutations
-  console.log(chalk`\t{yellowBright score: ${mutation.avg}} ({cyanBright ${detectorString}})\n{greenBright ${mutation.desc}}\n\t\tbold ${mutation.text.slice(0, maxChars)}}\n`);
+  console.log(chalk`\t{yellowBright score: ${mutation.avg}} ({cyanBright ${detectorString}})\n\t{greenBright ${mutation.desc}}\n\t\t{bold ${mutation.text.slice(0, maxChars)}}\n`);
 });
