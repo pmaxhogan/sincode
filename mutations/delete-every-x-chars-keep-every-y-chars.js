@@ -10,7 +10,7 @@ module.exports = (text, program) => {
 
   // enumerate through possible delete / keep combinations
   // etc. if keepEvery is 2 and delEvery is 3, keep 2, discard 3, etc
-  console.log(`\t\t\tdelete every ${program.deleteEveryMax || delEveryMax} and keep every ${program.keepEveryMax || keepEveryMax}`);
+  console.log(`\t\t\tdelete at most every ${program.deleteEveryMax || delEveryMax} and keep at most every ${program.keepEveryMax || keepEveryMax}`);
   for(let keepEvery = 1; keepEvery <= (program.deleteEveryMax || delEveryMax); keepEvery++){
     for(let delEvery = 1; delEvery <= (program.keepEveryMax || keepEveryMax); delEvery++){
       // the processed string
