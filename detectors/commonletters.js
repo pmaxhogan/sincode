@@ -2,6 +2,8 @@ const lev = require("fast-levenshtein");
 // most common letters
 const commonletters = "etaoinsrhldcumfpgwybvkxjqz";
 
+
+
 module.exports = (text) => {
 	// get the letters from text
 	const letters = text.toLowerCase().replace(/[^a-z]/g, "").split("");

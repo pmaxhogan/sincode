@@ -1,14 +1,13 @@
 const fs = require("fs");
 const path = require("path");
 const chalk = require("chalk");
-// console.log(chalk.bold("\treading wordlist file into memory..."));
-// console.log(chalk.bold("\tdone reading wordlist"));
+
+const outputTransformFunction = x => 3 * x - 2;
 
 module.exports = (text, program) => {
   const bigWordList = fs.readFileSync(path.join(__dirname, `../${program.big ? "big" : "small"}.txt`)).toString().split("\n");
   const words = text.toLowerCase().replace(/[^a-z]/g, " ").replace(/ {2,}/g, " ").split(" ").filter(Boolean);
   let remainingWords = words.slice();
-  let leftOver = "";
 
   // stores words & frequencies
   // eg. {"the": 5, "of": 3}
@@ -38,6 +37,9 @@ module.exports = (text, program) => {
 		}
 	});
 
-  // return 1 - the ratio of words not found to total words
-  return 1 - (remainingWords.length / words.length);
+  // score is 1 - the ratio of words not found to total words
+  const score = 1 - (remainingWords.length / words.length);
+
+  // if it's 2/3ths real words, it's probably pretty garbage
+  return outputTransformFunction(score);
 };

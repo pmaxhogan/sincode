@@ -18,13 +18,13 @@ module.exports = text => {
 
 const rot = (str, amount) => {
 	// make an output variable
-	var output = "";
+	let output = "";
 
 	// go through each character
-	for (var i = 0; i < str.length; i ++) {
+	for (let i = 0; i < str.length; i ++) {
 
 		// get the character we'll be appending
-		var c = str[i];
+		let c = str[i];
 
 		// if it's a letter...
 		if (letters.includes(c)) {

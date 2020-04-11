@@ -1,6 +1,6 @@
 const fs = require("fs");
 const path = require("path");
-const readline = require("readline");
+const ReadlineCounter = require("./lib/readlinecounter").ReadlineCounter;
 const cluster = require("cluster");
 const chalk = require("chalk");
 const program = require("commander");
@@ -8,29 +8,32 @@ const package = require("./package.json");
 program.
   version(package.version).
   option("-b, --big", "Use a bigger wordlist").
-  option("-d, --delete-every-max <n>", "Delete every <n> characters.", parseInt).
-  option("-k, --keep-every-max <n>", "Keep every <n> characters.", parseInt).
+  option("-d, --delete-every-max <n>", "Delete every <n> characters", parseInt).
+  option("-k, --keep-every-max <n>", "Keep every <n> characters", parseInt).
+  option("-n, --num-results <n>", "Display top <n> results", parseInt, 5).
+  option("-j, --num-processes <n>", "Fork <n> worker threads", parseInt).
+  option("-f, --filename <name>", "Read <name> as input", "text.txt").
   parse(process.argv);
 
 const maxChars = 150;
-const numChildren = parseInt(process.argv[2]) || require("os").cpus().length;
+const numChildren = program.numProcesses || require("os").cpus().length;
 
 if(cluster.isMaster){
-	console.log(chalk`{bgRedBright \n{black \n${package.name} v${package.version}\n}}`);
+	console.log(chalk`{bgMagentaBright {black \n${package.name} v${package.version}\n}}`);
 
 	// read text
-	const text = fs.readFileSync(path.join(__dirname, "text.txt")).toString();
+	const text = fs.readFileSync(path.join(__dirname, program.filename)).toString();
 
-	console.log(chalk`{greenBright Read text}\n\t{bold ${text.slice(0, 150)}}\n`);
+	console.log(chalk`{greenBright {bold Read text}}\n\t{bold ${text.slice(0, 150)}}\n`);
 
 	// mutations contain info about themselves
 	let mutations = [
 		{
 			text,
-			desc: "normal text"
+			desc: ""
 		}
 	];
-	console.log(chalk`\n{greenBright {bold Running mutations}}\n`);
+	console.log(chalk`{greenBright {bold Running mutations}}`);
 	fs.readdirSync(path.join(__dirname, "mutations")).forEach(newMutation => {
 		let oldMutationsCount = mutations.length;
 		console.log(chalk`{bold \tRunning mutation} {yellowBright ${newMutation}}`);
@@ -48,9 +51,9 @@ if(cluster.isMaster){
 			});
 		});
 		mutations = mutations.concat(newBatch);
-		console.log(chalk`{bold \tRan mutation {yellowBright ${newMutation}} and added {greenBright ${(mutations.length - oldMutationsCount)} new mutations}}\n`);
+		console.log(chalk`{bold \tRan mutation {yellowBright ${newMutation}} and added {greenBright {magentaBright ${(mutations.length - oldMutationsCount)}} new mutations}}\n`);
 	});
-	console.log(chalk`\n{greenBright {bold Running detectors on {yellowBright ${mutations.length} mutations}}}\n`);
+	console.log(chalk`\n{greenBright {bold Running detectors on {magentaBright ${mutations.length}} mutations} on {magentaBright ${numChildren}} processes}`);
 
 	// create one cluster / core
 	for(let i = 0; i < numChildren; i++){
@@ -60,6 +63,8 @@ if(cluster.isMaster){
 	// the processed mutations
 	let newMutations = [];
 
+	const counter = new ReadlineCounter(mutations.length);
+
 	// if a worker is done with a job
 	cluster.on("message", (worker, message, handle) => {
 		// if we're done
@@ -67,10 +72,7 @@ if(cluster.isMaster){
 			// add it
 			newMutations.push(message.data);
 
-			// display progress
-			readline.clearLine(process.stdout, 0);
-    	readline.cursorTo(process.stdout, 0, null);
-			process.stdout.write(newMutations.length + "/" + mutations.length);
+			counter.update(newMutations.length);
 
 			// if everything's done
 			if(newMutations.length === mutations.length){
@@ -95,15 +97,15 @@ if(cluster.isMaster){
 			cluster.workers[id].kill();
 		}
 		// these are the 5 most likely decryptions
-		const mostLikely5 = mutations.sort((a, b) => b.avg - a.avg).slice(0, 5);
+		const mostLikelyN = mutations.sort((a, b) => b.avg - a.avg).slice(0, program.numResults);
 
-		console.log(chalk`\n{bold {greenBright Analyzing reults...}}\n`);
+		console.log(chalk`\n{bold {greenBright Showing {magentaBright ${program.numResults}} results}}`);
 		// most chars to display
-		mostLikely5.forEach(mutation => {
-			const detectorString = mutation.detectors.reduce((str, detector) => str + ", " + detector[0] + ": " + detector[1], ", ").slice(4) +
+		mostLikelyN.forEach(mutation => {
+			const detectorString = mutation.detectors.reduce((str, detector) => str + ", " + detector[0] + ": " + detector[1].toFixed(5), ", ").slice(4) +
 			(mutation.text.length > maxChars ? "..." : "");
 			// display the 5 mostly likely mutations
-			console.log(chalk`\t{yellowBright score: ${mutation.avg}} ({cyanBright ${detectorString}})\n\t{greenBright ${mutation.desc}}\n\t\t{bold ${mutation.text.slice(0, maxChars)}}\n`);
+			console.log(chalk`\t{yellowBright score: ${mutation.avg.toFixed(5)}} ({magentaBright ${detectorString}})\n\t{greenBright ${mutation.desc.slice(3)}}\n\t\t{bold ${mutation.text.slice(0, maxChars)}}\n`);
 		});
 	};
 }else{
@@ -116,15 +118,14 @@ if(cluster.isMaster){
 				fs.readdirSync(path.join(__dirname, "detectors")).forEach(detectorName => {
 					// console.log(detectorName);
 					// load a module from the mutations folder and add its score
-					const score = parseFloat(require(
+					const score = require(
 						path.join(__dirname, "detectors/" + detectorName)
-					)(mutation.text, program).toFixed(5));
+					)(mutation.text, program);
 					mutation.detectors.push([detectorName, score]);
 					scores.push(score);
 				});
-				// average the scores and get rid of stupid floating point crap
-				const avg = parseFloat((scores.reduce((a, b) => a + b, 0) / scores.length).toFixed(5));
-				// console.log(avg + "\n");
+				// average the scores and round
+				const avg = scores.reduce((a, b) => a + b, 0) / scores.length;
 				mutation.avg = avg;
 				process.send({type: "done", data: mutation});
 			});
