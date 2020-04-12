@@ -7,7 +7,7 @@ const program = require("commander");
 const packageFile = require("./package.json");
 program.
   version(packageFile.version).
-  option("-b, --big", "Use a bigger wordlist").
+  option("-b, --big", "Use a bigger word list").
   option("-d, --delete-every-max <n>", "Delete every <n> characters", parseInt).
   option("-k, --keep-every-max <n>", "Keep every <n> characters", parseInt).
   option("-l, --min-length <n>", "Discard mutations shorter than <n> characters", parseInt).
@@ -125,7 +125,7 @@ if(cluster.isMaster){
 
 		console.log(chalk`\n{bold {keyword("lime") Showing {keyword("red") ${program.numResults}} results}}`);
 
-		// these are the 5 most likely decryptions
+		// these are the 5 most likely decrypted strings
 		const mostLikelyN = mutations.sort((a, b) => b.avg - a.avg).slice(0, program.numResults);
 
 		// most chars to display
