@@ -4,9 +4,9 @@ const ReadlineCounter = require("./lib/readlinecounter").ReadlineCounter;
 const cluster = require("cluster");
 const chalk = require("chalk");
 const program = require("commander");
-const package = require("./package.json");
+const packageFile = require("./package.json");
 program.
-  version(package.version).
+  version(packageFile.version).
   option("-b, --big", "Use a bigger wordlist").
   option("-d, --delete-every-max <n>", "Delete every <n> characters", parseInt).
   option("-k, --keep-every-max <n>", "Keep every <n> characters", parseInt).
@@ -23,7 +23,7 @@ const maxChars = 150;
 const numChildren = program.numProcesses || require("os").cpus().length;
 
 if(cluster.isMaster){
-	console.log(chalk`{bgMagentaBright {black \n${package.name} v${package.version}\n}}`);
+	console.log(chalk`{bgMagentaBright {black \n${packageFile.name} v${packageFile.version}\n}}`);
 
 	// read text
 	const text = fs.readFileSync(path.join(__dirname, program.filename)).toString();
@@ -88,7 +88,7 @@ if(cluster.isMaster){
 	const counter = new ReadlineCounter(mutations.length);
 
 	// if a worker is done with a job
-	cluster.on("message", (worker, message, handle) => {
+	cluster.on("message", (worker, message) => {
 		// if we're done
 		if(message && message.type === "done"){
 			// add it
@@ -153,8 +153,7 @@ if(cluster.isMaster){
 					scores.push(score);
 				});
 				// average the scores and round
-				const avg = scores.reduce((a, b) => a + b, 0) / scores.length;
-				mutation.avg = avg;
+				mutation.avg = scores.reduce((a, b) => a + b, 0) / scores.length;
 				process.send({type: "done", data: mutation});
 			});
 		}
