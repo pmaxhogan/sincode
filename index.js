@@ -10,8 +10,10 @@ program.
   option("-b, --big", "Use a bigger wordlist").
   option("-d, --delete-every-max <n>", "Delete every <n> characters", parseInt).
   option("-k, --keep-every-max <n>", "Keep every <n> characters", parseInt).
+  option("-l, --min-length <n>", "Discard mutations shorter than <n> characters", parseInt).
+  option("-m, --max-length <n>", "Discard mutations shorter than <n> characters", parseInt).
   option("-n, --num-results <n>", "Display top <n> results", parseInt, 5).
-  option("-j, --num-processes <n>", "Fork <n> worker threads", parseInt).
+  option("-j, --processes <n>", "Fork <n> worker threads", parseInt).
   option("-f, --filename <name>", "Read <name> as input", "text.txt").
   parse(process.argv);
 
@@ -35,11 +37,12 @@ if(cluster.isMaster){
 	];
 	console.log(chalk`{greenBright {bold Running mutations}}`);
 	fs.readdirSync(path.join(__dirname, "mutations")).forEach(newMutation => {
-		let oldMutationsCount = mutations.length;
+		const counter = new ReadlineCounter(mutations.length);
+		const oldMutationsCount = mutations.length;
 		console.log(chalk`{bold \tRunning mutation} {yellowBright ${newMutation}}`);
 		// load a module from the mutations folder and add its output
 		const newBatch = [];
-		mutations.forEach(mutation => {
+		mutations.forEach((mutation, idx) => {
 			const results = require(
 				path.join(__dirname, "mutations/" + newMutation)
 			)(mutation.text, program);
@@ -49,10 +52,27 @@ if(cluster.isMaster){
 					desc: mutation.desc + " + " + result.desc
 				});
 			});
+			counter.update(idx + 1);
 		});
+		counter.done();
 		mutations = mutations.concat(newBatch);
-		console.log(chalk`{bold \tRan mutation {yellowBright ${newMutation}} and added {greenBright {magentaBright ${(mutations.length - oldMutationsCount)}} new mutations}}\n`);
+		console.log(chalk`\n{bold \tRan mutation {yellowBright ${newMutation}} and added {greenBright {magentaBright ${(mutations.length - oldMutationsCount)}} new mutations}}\n\n`);
 	});
+
+	if(program.minLength){
+		console.log(chalk`\n{greenBright {bold Removing mutations shorter than {magentaBright ${program.minLength}} characters}}`);
+		const oldMutationsCount = mutations.length;
+		mutations = mutations.filter(mutation => mutation.text.length >= program.minLength);
+		console.log(chalk`{bold \tRemoved {magentaBright ${(oldMutationsCount - mutations.length)}} mutations ({magentaBright -${((oldMutationsCount - mutations.length) / oldMutationsCount * 100).toFixed(5)}%})}\n`);
+	}
+
+	if(program.maxLength){
+		console.log(chalk`\n{greenBright {bold Removing mutations longer than {magentaBright ${program.maxLength}} characters}}`);
+		const oldMutationsCount = mutations.length;
+		mutations = mutations.filter(mutation => mutation.text.length <= program.maxLength);
+		console.log(chalk`{bold \tRemoved {magentaBright ${(oldMutationsCount - mutations.length)}} mutations ({magentaBright -${((oldMutationsCount - mutations.length) / oldMutationsCount * 100).toFixed(5)}%})}\n`);
+	}
+
 	console.log(chalk`\n{greenBright {bold Running detectors on {magentaBright ${mutations.length}} mutations} on {magentaBright ${numChildren}} processes}`);
 
 	// create one cluster / core
@@ -76,6 +96,7 @@ if(cluster.isMaster){
 
 			// if everything's done
 			if(newMutations.length === mutations.length){
+				counter.done();
 				onDone();
 			}
 		}
@@ -86,7 +107,10 @@ if(cluster.isMaster){
 
 	let startIdx = 0;
 	for(const id in cluster.workers){
-		cluster.workers[id].send({type: "mutationtestjobs", data: mutations.slice(startIdx, startIdx + jobsPerWorker)});
+		cluster.workers[id].send({type: "mutationtestjobs", data: {
+			text,
+			mutations: mutations.slice(startIdx, startIdx + jobsPerWorker)
+		}});
 		startIdx += jobsPerWorker;
 	}
 
@@ -96,10 +120,12 @@ if(cluster.isMaster){
 		for(const id in cluster.workers){
 			cluster.workers[id].kill();
 		}
+
+		console.log(chalk`\n{bold {greenBright Showing {magentaBright ${program.numResults}} results}}`);
+
 		// these are the 5 most likely decryptions
 		const mostLikelyN = mutations.sort((a, b) => b.avg - a.avg).slice(0, program.numResults);
 
-		console.log(chalk`\n{bold {greenBright Showing {magentaBright ${program.numResults}} results}}`);
 		// most chars to display
 		mostLikelyN.forEach(mutation => {
 			const detectorString = mutation.detectors.reduce((str, detector) => str + ", " + detector[0] + ": " + detector[1].toFixed(5), ", ").slice(4) +
@@ -111,7 +137,7 @@ if(cluster.isMaster){
 }else{
 	process.on("message", (msg) => {
 		if(msg.type === "mutationtestjobs"){
-			msg.data.forEach(mutation => {
+			msg.data.mutations.forEach(mutation => {
 				mutation.text = mutation.text.trim();
 				let scores = [];
 				mutation.detectors = [];
@@ -120,7 +146,7 @@ if(cluster.isMaster){
 					// load a module from the mutations folder and add its score
 					const score = require(
 						path.join(__dirname, "detectors/" + detectorName)
-					)(mutation.text, program);
+					)(mutation.text, program, msg.data.text);
 					mutation.detectors.push([detectorName, score]);
 					scores.push(score);
 				});
