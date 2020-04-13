@@ -5,6 +5,7 @@ const keepEveryMax = 6;
 const delEveryMax = 6;
 
 module.exports = (text, program) => {
+  if(!program.keepDelete) return [];
   // val to return
   const ret = [];
 
