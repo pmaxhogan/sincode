@@ -24,16 +24,26 @@ const rot = (str, amount) => {
 	for (let i = 0; i < str.length; i ++) {
 
 		// get the character we'll be appending
-		let c = str[i];
+		let char = str[i];
 
-		// if it's a letter...
-		if (letters.includes(c)) {
-			// shift it
-			c = letters[(letters.indexOf(c) + amount) % letters.length];
+		const isUpperCase = char.toUpperCase() === char;
+
+		if(isUpperCase) {
+			// if it's a letter...
+			if (letters.includes(char.toLowerCase())){
+				// shift it
+				char = (letters[(letters.indexOf(char.toLowerCase()) + amount) % letters.length]).toUpperCase();
+			}
+		}else{
+			// if it's a letter...
+			if (letters.includes(char)) {
+				// shift it
+				char = letters[(letters.indexOf(char) + amount) % letters.length];
+			}
 		}
 
 		// append the shifted letter
-		output += c;
+		output += char;
 	}
 
 	// done
