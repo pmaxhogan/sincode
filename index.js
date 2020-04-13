@@ -14,6 +14,7 @@ program.
   option("-m, --max-length <n>", "Discard mutations shorter than <n> characters", parseInt).
   option("-n, --num-results <n>", "Display top <n> results", parseInt, 5).
   option("-j, --processes <n>", "Fork <n> worker threads", parseInt).
+  option("-k, --keep-delete", "Enable keepDeleteTrim rotation").
   option("--no-color", "Disable color output").
   option("--color <level>", "Explicitly set color level (256 or 16m)").
   option("-f, --filename <name>", "Read <name> as input", "text.txt").
@@ -133,7 +134,7 @@ if(cluster.isMaster){
 			const detectorString = mutation.detectors.reduce((str, detector) => str + ", " + detector[0] + ": " + detector[1].toFixed(5), ", ").slice(4) +
 			(mutation.text.length > maxChars ? "..." : "");
 			// display the 5 mostly likely mutations
-			console.log(chalk`\t{keyword("yellow") score: ${mutation.avg.toFixed(5)}} ({keyword("red") ${detectorString}})\n\t{keyword("aqua") ${mutation.desc.slice(3)}}\n\t\t${mutation.text.slice(0, maxChars)}\n`);
+			console.log(chalk`\t{bold {keyword("yellow") score: ${mutation.avg.toFixed(5)}} ({keyword("red") ${detectorString}})\n\t{keyword("aqua") ${mutation.desc.slice(3)}}}\n\t\t${mutation.text.slice(0, maxChars)}\n`);
 		});
 	};
 }else{
